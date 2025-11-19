@@ -149,7 +149,7 @@ resource "aws_cloudwatch_metric_alarm" "rds_low_storage" {
   namespace           = "AWS/RDS"
   period              = 300
   statistic           = "Average"
-  threshold           = 5000000000  # 5 GB in bytes
+  threshold           = 5000000000 # 5 GB in bytes
   alarm_description   = "This metric monitors RDS free storage space"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
@@ -167,7 +167,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_high_response_time" {
   namespace           = "AWS/ApplicationELB"
   period              = 300
   statistic           = "Average"
-  threshold           = 1.0  # 1 second
+  threshold           = 1.0 # 1 second
   alarm_description   = "This metric monitors ALB response time"
   alarm_actions       = [aws_sns_topic.alerts.arn]
 

@@ -57,7 +57,7 @@ resource "aws_db_instance" "main" {
 
   db_name  = var.db_name
   username = var.db_username
-  password = random_password.db_password.result
+  password = var.db_password != "" ? var.db_password : random_password.db_password.result
 
   multi_az               = var.enable_multi_az
   db_subnet_group_name   = aws_db_subnet_group.main.name
@@ -65,11 +65,11 @@ resource "aws_db_instance" "main" {
   publicly_accessible    = false
 
   backup_retention_period = 7
-  backup_window          = "03:00-04:00"
-  maintenance_window     = "mon:04:00-mon:05:00"
+  backup_window           = "03:00-04:00"
+  maintenance_window      = "mon:04:00-mon:05:00"
 
   deletion_protection       = var.enable_deletion_protection
-  skip_final_snapshot      = !var.enable_deletion_protection
+  skip_final_snapshot       = !var.enable_deletion_protection
   final_snapshot_identifier = var.enable_deletion_protection ? "${local.resource_prefix}-db-final-snapshot-${random_string.suffix.result}" : null
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]

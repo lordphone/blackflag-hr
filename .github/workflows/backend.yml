@@ -13,9 +13,11 @@ on:
 
 env:
   AWS_REGION: us-west-2
-  ECR_REPOSITORY: hr-cloud-infra-dev-backend
-  ECS_CLUSTER: hr-cloud-infra-dev-cluster
-  ECS_SERVICE: hr-cloud-infra-dev-backend-service
+  # These should be set as repository secrets or environment variables
+  # They match the Terraform resource naming convention
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY || 'hr-cloud-infra-dev-backend' }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER || 'hr-cloud-infra-dev-cluster' }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE || 'hr-cloud-infra-dev-backend-service' }}
 
 jobs:
   test:
@@ -83,11 +85,18 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         working-directory: ./backend
         run: |
-          docker build --platform linux/amd64 -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          # Extract repository name from full ECR URL if it contains a slash
+          if [[ "$ECR_REPOSITORY" == *"/"* ]]; then
+            REPO_NAME=$(echo "$ECR_REPOSITORY" | sed 's|.*/||')
+          else
+            REPO_NAME="$ECR_REPOSITORY"
+          fi
+
+          docker build --platform linux/amd64 -t $ECR_REGISTRY/$REPO_NAME:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$REPO_NAME:$IMAGE_TAG $ECR_REGISTRY/$REPO_NAME:latest
+          docker push $ECR_REGISTRY/$REPO_NAME:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$REPO_NAME:latest
+          echo "image=$ECR_REGISTRY/$REPO_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
       
       - name: Update ECS service
         run: |

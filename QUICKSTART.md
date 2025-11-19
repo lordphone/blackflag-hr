@@ -6,7 +6,7 @@ Here is how to get the infrastructure up and running quickly.
 
 You need these installed:
 *   AWS CLI (configured with your credentials)
-*   Terraform (v1.5+)
+*   Terraform (v1.13.5+)
 *   Docker
 *   Node.js & Python
 
@@ -31,8 +31,15 @@ You need these installed:
     
     This takes about 15 minutes (mostly waiting for RDS and CloudFront).
 
-3.  **Check it out**
-    
+3.  **Configure GitHub Secrets (Optional)**
+
+    If you plan to use the GitHub Actions CI/CD workflows, configure the repository secrets:
+    ```bash
+    ./scripts/setup-github-secrets.sh your-github-username/your-repo-name
+    ```
+
+4.  **Check it out**
+
     The script will output the URLs at the end.
     *   **Frontend:** The CloudFront URL.
     *   **Backend:** The ALB URL (check `/health` to confirm it's up).

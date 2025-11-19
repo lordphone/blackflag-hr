@@ -8,7 +8,7 @@ Before starting, ensure you have:
 
 - **AWS Account** with appropriate permissions (EC2, ECS, RDS, S3, CloudFront, IAM, etc.)
 - **AWS CLI** installed and configured (`aws configure`)
-- **Terraform** >= 1.5.0 ([Install Terraform](https://www.terraform.io/downloads))
+- **Terraform** >= 1.13.5 ([Install Terraform](https://www.terraform.io/downloads))
 - **Docker** installed ([Install Docker](https://docs.docker.com/get-docker/))
 - **Node.js** >= 18.x ([Install Node.js](https://nodejs.org/))
 - **Python** >= 3.11 ([Install Python](https://www.python.org/downloads/))

@@ -14,6 +14,7 @@ db_instance_class     = "db.t3.micro"  # For production, use db.t3.small or larg
 db_allocated_storage  = 20             # GB
 db_name              = "hrdb"
 db_username          = "dbadmin"
+db_password          = "change-this-secure-password-123!"  # IMPORTANT: Change this!
 
 # ECS Configuration
 ecs_task_cpu            = "256"   # 0.25 vCPU

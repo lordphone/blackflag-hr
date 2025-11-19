@@ -53,6 +53,13 @@ variable "db_username" {
   sensitive   = true
 }
 
+variable "db_password" {
+  description = "Database master password. If not provided, a random password will be generated."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
 variable "ecs_task_cpu" {
   description = "CPU units for ECS task"
   type        = string

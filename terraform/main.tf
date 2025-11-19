@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.5.0"
+  required_version = ">= 1.13.5"
 
   required_providers {
     aws = {
@@ -47,7 +47,7 @@ locals {
     Environment = var.environment
     ManagedBy   = "Terraform"
   }
-  
+
   resource_prefix = "${var.project_name}-${var.environment}"
 }
 

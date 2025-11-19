@@ -140,7 +140,7 @@ resource "aws_ecs_task_definition" "backend" {
   container_definitions = jsonencode([{
     name  = "backend"
     image = "${aws_ecr_repository.backend.repository_url}:latest"
-    
+
     portMappings = [{
       containerPort = var.backend_container_port
       protocol      = "tcp"
