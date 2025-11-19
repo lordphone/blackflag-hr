@@ -34,7 +34,31 @@ Check `QUICKSTART.md` for the fast track, or `docs/DEPLOYMENT.md` if you want th
 
 ## Configuration
 
-Most settings are in `terraform/variables.tf`. You'll need to create a `terraform.tfvars` file in that directory to set your specific values (like database passwords or environment names) before deploying.
+Most settings are in `terraform/variables.tf`. You'll need to create a `terraform.tfvars` file in that directory to set your specific values before deploying:
+
+```bash
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your values
+```
+
+**Important:**
+- Set a secure `db_password` or leave it empty to auto-generate one
+- Update `alert_email` for monitoring notifications
+- Set `enable_deletion_protection = true` for production
+
+## CI/CD Setup
+
+After deploying infrastructure, configure GitHub secrets for automated deployments:
+
+```bash
+./scripts/setup-github-secrets.sh your-username/your-repo-name
+```
+
+This sets up:
+- `ECR_REPOSITORY`: ECR repository name for Docker images
+- `ECS_CLUSTER`: ECS cluster name
+- `ECS_SERVICE`: ECS service name
 
 ## Local Dev
 
