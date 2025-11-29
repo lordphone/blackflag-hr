@@ -1,18 +1,27 @@
 # BlackFlag HR
 
-A secure, cloud-native Human Resources portal demonstrating enterprise security compliance on AWS.
+A secure, cloud-native Human Resources management application with complete AWS infrastructure deployment.
 
 ## Overview
 
-This project establishes the AWS infrastructure required to host an enterprise HR application. Instead of manually clicking through the AWS Console, everything is defined in code (Terraform) to ensure reproducibility and stability.
+BlackFlag HR is a full-stack HR management system built with modern technologies and deployed on AWS. This project includes both the application code and the complete cloud infrastructure needed to run it in production.
+
+The application features employee management, secure authentication, and a modern React-based interface, all running on a scalable AWS architecture.
 
 ## Key Features
 
-1. **Infrastructure as Code:** Complete environment setup via Terraform modules
-2. **Containerization:** The backend API runs in Docker containers managed by ECS
-3. **Secure Networking:** VPC design splits public (ALB, NAT) and private (DB, App) resources for security
-4. **CI/CD Ready:** GitHub Actions workflows are set up for automated testing and deployment
-5. **Monitoring:** CloudWatch dashboards and alarms are configured to track system health
+### Application Features
+- **Employee Management:** Complete CRUD operations for employee records
+- **Secure Authentication:** User sign-in with session management
+- **Modern UI:** Clean, responsive React interface with Tailwind CSS
+- **REST API:** FastAPI backend with proper error handling
+
+### Infrastructure Features
+- **Infrastructure as Code:** Complete AWS environment setup via Terraform
+- **Containerization:** Backend API runs in Docker containers on ECS Fargate
+- **Secure Networking:** VPC with public/private subnet separation
+- **CI/CD Pipeline:** GitHub Actions for automated deployment
+- **Monitoring:** CloudWatch dashboards and alerts
 
 ## Cost Estimate
 
@@ -61,32 +70,34 @@ See **[Deployment Guide](docs/DEPLOYMENT.md)** for detailed step-by-step instruc
 ## Project Structure
 
 ```
-├── backend/            # FastAPI application
+├── backend/            # FastAPI application & API
 │   ├── src/
-│   │   ├── routes/     # API endpoints
-│   │   ├── models.py   # SQLAlchemy models
-│   │   └── main.py     # App entry point
-│   └── Dockerfile
-├── frontend/           # React SPA
+│   │   ├── routes/     # Employee management endpoints
+│   │   ├── models.py   # SQLAlchemy data models
+│   │   └── main.py     # FastAPI app entry point
+│   └── Dockerfile      # Container definition
+├── frontend/           # React single-page application
 │   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── services/
-│   └── package.json
-├── terraform/          # Infrastructure as Code
-│   ├── vpc.tf
-│   ├── ecs.tf
-│   ├── rds.tf
-│   ├── alb.tf
-│   └── ...
-├── .github/workflows/  # CI/CD pipelines
-└── docs/               # Documentation
+│   │   ├── components/ # Reusable UI components
+│   │   ├── pages/      # Application pages (SignIn, Dashboard)
+│   │   └── services/   # API client functions
+│   ├── index.html      # App entry point
+│   └── package.json    # Frontend dependencies
+├── terraform/          # AWS Infrastructure as Code
+│   ├── vpc.tf          # Network configuration
+│   ├── ecs.tf          # Container orchestration
+│   ├── rds.tf          # Database setup
+│   ├── alb.tf          # Load balancer
+│   └── main.tf         # Core infrastructure
+├── scripts/            # Deployment automation
+├── .github/workflows/  # CI/CD pipeline definitions
+└── docs/               # Project documentation
 ```
 
 ## Security Features
 
-- **Authentication:** OIDC with AWS IAM Identity Center
-- **Authorization:** Role-Based Access Control (Employee vs HR Admin)
-- **Network:** Private subnets, WAF, TLS 1.3
-- **Secrets:** AWS Secrets Manager (no `.env` files)
-- **CI/CD:** OIDC federation (no long-lived AWS keys)
+- **Authentication:** Secure sign-in with session management (ready for OIDC integration)
+- **Authorization:** Role-Based Access Control framework (Employee vs HR Admin)
+- **Network Security:** VPC isolation, WAF protection, TLS encryption
+- **Secrets Management:** AWS Secrets Manager integration (no hardcoded credentials)
+- **CI/CD Security:** OIDC federation for AWS access (no long-lived keys)
