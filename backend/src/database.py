@@ -3,7 +3,7 @@ Database connection and session management
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from typing import AsyncGenerator
 import logging
 
@@ -69,7 +69,7 @@ async def check_db_connection() -> bool:
     """
     try:
         async with engine.connect() as conn:
-            await conn.execute("SELECT 1")
+            await conn.execute(text("SELECT 1"))
         return True
     except Exception as e:
         logger.error(f"Database connection failed: {e}")

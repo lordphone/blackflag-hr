@@ -1,6 +1,6 @@
 # Application Load Balancer Security Group
 resource "aws_security_group" "alb" {
-  name_description = "${local.resource_prefix}-alb-sg"
+  name        = "${local.resource_prefix}-alb-sg"
   description      = "Security group for Application Load Balancer"
   vpc_id           = aws_vpc.main.id
 

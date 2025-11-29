@@ -201,7 +201,7 @@ resource "aws_ecs_task_definition" "backend" {
 
 # ECS Security Group
 resource "aws_security_group" "ecs_tasks" {
-  name_description = "${local.resource_prefix}-ecs-tasks-sg"
+  name        = "${local.resource_prefix}-ecs-tasks-sg"
   description      = "Security group for ECS tasks"
   vpc_id           = aws_vpc.main.id
 
@@ -248,10 +248,8 @@ resource "aws_ecs_service" "backend" {
 
   health_check_grace_period_seconds = 60
 
-  deployment_configuration {
-    maximum_percent         = 200
-    minimum_healthy_percent = 100
-  }
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 100
 
   depends_on = [
     aws_lb_listener.http,

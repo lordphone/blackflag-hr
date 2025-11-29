@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements first for better caching
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install Python dependencies to a specific location
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 # Final stage
 FROM python:3.11-slim
@@ -22,24 +22,23 @@ FROM python:3.11-slim
 # Set working directory
 WORKDIR /app
 
+# Create non-root user first (before copying files)
+RUN useradd -m -u 1000 appuser
+
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libpq5 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+# Copy Python dependencies from builder to system location
+COPY --from=builder /install /usr/local
 
 # Copy application code
 COPY src/ ./src/
 
-# Make sure scripts in .local are usable
-ENV PATH=/root/.local/bin:$PATH
-
-# Create non-root user
-RUN useradd -m -u 1000 appuser && \
-    chown -R appuser:appuser /app
+# Change ownership of app directory
+RUN chown -R appuser:appuser /app
 
 # Switch to non-root user
 USER appuser
