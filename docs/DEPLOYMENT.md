@@ -217,8 +217,8 @@ The infrastructure includes:
 
 3. Access the frontend:
    - Open the CloudFront URL in your browser
-   - You should see the HR Cloud Platform homepage
-   - The system status should show "All Systems Operational"
+   - You should see the BlackFlag HR sign-in page
+   - Sign in to access the HR management dashboard
 
 ## Updates and Redeployment
 
