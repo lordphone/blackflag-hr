@@ -45,7 +45,7 @@ const Footer = () => {
         </div>
         
         <div className="border-t border-gray-700 mt-8 pt-8 text-center text-sm text-gray-400">
-          <p>&copy; {currentYear} HR Cloud Platform. Built for CMPE-281.</p>
+          <p>&copy; {currentYear} BlackFlag HR. All rights reserved.</p>
         </div>
       </div>
     </footer>

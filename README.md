@@ -1,48 +1,92 @@
-# HR Cloud Infrastructure Project
+# BlackFlag HR
 
-A comprehensive cloud-native HR platform featuring a React frontend, FastAPI backend, and fully automated AWS infrastructure using Terraform.
+A secure, cloud-native Human Resources portal demonstrating enterprise security compliance on AWS.
 
-## 📚 Documentation
+## Overview
 
-*   **[Design Document](docs/DESIGN.md)**: Explanation of design choices, infrastructure diagrams, and sequence flows.
-*   **[Architecture Details](docs/ARCHITECTURE.md)**: Deep dive into the AWS components, network topology, and security.
-*   **[Deployment Guide](docs/DEPLOYMENT.md)**: Step-by-step instructions to deploy this project to your AWS account.
-*   **[Project Summary](PROJECT_SUMMARY.md)**: High-level overview of the tech stack and costs.
+This project establishes the AWS infrastructure required to host an enterprise HR application. Instead of manually clicking through the AWS Console, everything is defined in code (Terraform) to ensure reproducibility and stability.
 
-## 🚀 Quick Start
+## Key Features
 
-1.  **Clone the repo**:
-    ```bash
-    git clone <repository-url>
-    cd final-project
-    ```
+1. **Infrastructure as Code:** Complete environment setup via Terraform modules
+2. **Containerization:** The backend API runs in Docker containers managed by ECS
+3. **Secure Networking:** VPC design splits public (ALB, NAT) and private (DB, App) resources for security
+4. **CI/CD Ready:** GitHub Actions workflows are set up for automated testing and deployment
+5. **Monitoring:** CloudWatch dashboards and alarms are configured to track system health
 
-2.  **Deploy Infrastructure**:
-    ```bash
-    cd terraform
-    cp terraform.tfvars.example terraform.tfvars
-    # Edit terraform.tfvars with your settings
-    terraform init
-    terraform apply
-    ```
+## Cost Estimate
 
-3.  **Deploy Applications**:
-    Follow the detailed steps in [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) to build and push the Docker images and deploy the frontend.
+Running this stack 24/7 in `us-west-2` costs approximately **$130/month**.
+- NAT Gateways and the Load Balancer are the biggest fixed costs
+- For development, you can reduce this by removing the NAT Gateways or shutting down resources when not in use
 
-## 🏗️ Architecture
+## Documentation
 
-This project uses a modern, serverless-first architecture:
-*   **Frontend**: React SPA hosted on S3 + CloudFront.
-*   **Backend**: Python FastAPI running on AWS ECS Fargate.
-*   **Database**: Managed PostgreSQL (RDS) in private subnets.
-*   **Networking**: VPC with public/private isolation and Application Load Balancer.
+| Document | Description |
+|----------|-------------|
+| **[Design & Architecture](docs/DESIGN.md)** | Application design, security decisions, RBAC model, and feature roadmap |
+| **[AWS Infrastructure](docs/ARCHITECTURE.md)** | VPC topology, ECS/RDS configuration, security groups, and cost analysis |
+| **[Deployment Guide](docs/DEPLOYMENT.md)** | Comprehensive deployment instructions and CI/CD setup |
 
-## 🛠️ Tech Stack
+## Architecture Overview
 
-*   **Infrastructure**: Terraform (HCL)
-*   **Backend**: Python 3.11, FastAPI, Docker
-*   **Frontend**: TypeScript, React, Vite
-*   **Cloud Provider**: AWS (ECS, RDS, S3, CloudFront, VPC)
+```
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│  CloudFront  │     │   AWS WAF    │     │     ALB      │     │  ECS Fargate │
+│  (Frontend)  │     │  (Layer 7)   │────▶│   (HTTPS)    │────▶│  (Backend)   │
+└──────┬───────┘     └──────────────┘     └──────────────┘     └──────┬───────┘
+       │                                                               │
+       ▼                                                               ▼
+┌──────────────┐                                               ┌──────────────┐
+│  S3 Bucket   │                                               │     RDS      │
+│ (Static SPA) │                                               │ (PostgreSQL) │
+└──────────────┘                                               └──────────────┘
+```
 
----
-*Created for CMPE-281 Cloud Technologies*
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| **Frontend** | React, TypeScript, Vite, Tailwind CSS |
+| **Backend** | Python 3.11, FastAPI |
+| **Database** | PostgreSQL 15 (RDS) |
+| **Infrastructure** | Terraform |
+| **CI/CD** | GitHub Actions |
+| **Cloud** | AWS (ECS, RDS, S3, CloudFront, WAF, ALB) |
+
+### Deploy
+
+See **[Deployment Guide](docs/DEPLOYMENT.md)** for detailed step-by-step instructions.
+
+## Project Structure
+
+```
+├── backend/            # FastAPI application
+│   ├── src/
+│   │   ├── routes/     # API endpoints
+│   │   ├── models.py   # SQLAlchemy models
+│   │   └── main.py     # App entry point
+│   └── Dockerfile
+├── frontend/           # React SPA
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   └── services/
+│   └── package.json
+├── terraform/          # Infrastructure as Code
+│   ├── vpc.tf
+│   ├── ecs.tf
+│   ├── rds.tf
+│   ├── alb.tf
+│   └── ...
+├── .github/workflows/  # CI/CD pipelines
+└── docs/               # Documentation
+```
+
+## Security Features
+
+- **Authentication:** OIDC with AWS IAM Identity Center
+- **Authorization:** Role-Based Access Control (Employee vs HR Admin)
+- **Network:** Private subnets, WAF, TLS 1.3
+- **Secrets:** AWS Secrets Manager (no `.env` files)
+- **CI/CD:** OIDC federation (no long-lived AWS keys)

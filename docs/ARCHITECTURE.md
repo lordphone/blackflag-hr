@@ -1,402 +1,404 @@
-# Architecture Documentation
+# AWS Infrastructure Architecture
 
-This document provides detailed information about the cloud infrastructure architecture.
+> **Project:** BlackFlag HR  
+> **Doc Version:** 1.0  
+> **Last Updated:** November 2025
 
-## 🏗️ High-Level Architecture
+This document details the AWS infrastructure components that power the BlackFlag HR platform. For application-level design decisions, see [DESIGN.md](./DESIGN.md).
+
+---
+
+## 1. High-Level Infrastructure Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                           Internet                               │
-└────────────────┬─────────────────────────┬──────────────────────┘
-                 │                         │
-                 │                         │
-        ┌────────▼──────────┐    ┌────────▼──────────┐
-        │   CloudFront CDN  │    │  Application LB   │
-        │   (Frontend)      │    │   (Backend API)   │
-        └────────┬──────────┘    └────────┬──────────┘
-                 │                         │
-                 │                         │
-        ┌────────▼──────────┐    ┌────────▼──────────┐
-        │   S3 Bucket       │    │   ECS Fargate     │
-        │   (Static Files)  │    │   (Containers)    │
-        └───────────────────┘    └────────┬──────────┘
-                                           │
-                                  ┌────────▼──────────┐
-                                  │  RDS PostgreSQL   │
-                                  │  (Database)       │
-                                  └───────────────────┘
+                              ┌─────────────────────────────────────────────────────────────┐
+                              │                        INTERNET                              │
+                              └──────────────────────────┬──────────────────────────────────┘
+                                                         │
+                    ┌────────────────────────────────────┼────────────────────────────────────┐
+                    │                                    │                                    │
+           ┌────────▼────────┐                  ┌────────▼────────┐                          │
+           │   CloudFront    │                  │   AWS WAF       │                          │
+           │   Distribution  │                  │   (Layer 7)     │                          │
+           └────────┬────────┘                  └────────┬────────┘                          │
+                    │                                    │                                    │
+           ┌────────▼────────┐                  ┌────────▼────────┐                          │
+           │   S3 Bucket     │                  │   Application   │                          │
+           │   (Frontend)    │                  │   Load Balancer │                          │
+           └─────────────────┘                  │   (HTTPS/443)   │                          │
+                                                └────────┬────────┘                          │
+                                                         │                                    │
+┌────────────────────────────────────────────────────────┼────────────────────────────────────┤
+│ VPC: 10.0.0.0/16                                       │                                    │
+│                                                        │                                    │
+│  ┌─────────────────────────────────────────────────────┼─────────────────────────────────┐ │
+│  │ PUBLIC SUBNETS                                      │                                 │ │
+│  │                                                     │                                 │ │
+│  │  ┌──────────────────┐              ┌──────────────────┐                              │ │
+│  │  │ AZ-a: 10.0.0.0/24│              │ AZ-b: 10.0.1.0/24│                              │ │
+│  │  │                  │              │                  │                              │ │
+│  │  │  ┌────────────┐  │              │  ┌────────────┐  │                              │ │
+│  │  │  │ NAT Gateway│  │              │  │ NAT Gateway│  │                              │ │
+│  │  │  └─────┬──────┘  │              │  └─────┬──────┘  │                              │ │
+│  │  └────────┼─────────┘              └────────┼─────────┘                              │ │
+│  └───────────┼─────────────────────────────────┼─────────────────────────────────────────┘ │
+│              │                                 │                                            │
+│  ┌───────────┼─────────────────────────────────┼─────────────────────────────────────────┐ │
+│  │ PRIVATE SUBNETS                             │                                         │ │
+│  │           │                                 │                                         │ │
+│  │  ┌────────▼─────────┐              ┌────────▼─────────┐                              │ │
+│  │  │ AZ-a: 10.0.10.0/24              │ AZ-b: 10.0.11.0/24                              │ │
+│  │  │                  │              │                  │                              │ │
+│  │  │  ┌────────────┐  │              │  ┌────────────┐  │       ┌──────────────────┐  │ │
+│  │  │  │ ECS Task   │  │              │  │ ECS Task   │  │       │  RDS PostgreSQL  │  │ │
+│  │  │  │ (Fargate)  │◄─┼──────────────┼──┤ (Fargate)  │  │──────▶│  (Multi-AZ)      │  │ │
+│  │  │  └────────────┘  │              │  └────────────┘  │       └──────────────────┘  │ │
+│  │  └──────────────────┘              └──────────────────┘                              │ │
+│  └───────────────────────────────────────────────────────────────────────────────────────┘ │
+└────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🌐 Network Architecture
+---
 
-### VPC Design
+## 2. Network Architecture
 
-- **CIDR Block**: 10.0.0.0/16
-- **Availability Zones**: 2 (for high availability)
-- **Subnets**:
-  - Public Subnets (2): 10.0.0.0/24, 10.0.1.0/24
-  - Private Subnets (2): 10.0.10.0/24, 10.0.11.0/24
+### 2.1. VPC Configuration
 
-### Network Flow
+| Property | Value |
+|----------|-------|
+| **CIDR Block** | `10.0.0.0/16` (65,536 IPs) |
+| **Region** | `us-west-2` |
+| **Availability Zones** | 2 (for high availability) |
+| **DNS Hostnames** | Enabled |
+| **DNS Resolution** | Enabled |
 
-1. **Public Subnets**:
-   - Application Load Balancer
-   - NAT Gateways
-   - Internet Gateway access
+### 2.2. Subnet Layout
 
-2. **Private Subnets**:
-   - ECS Fargate tasks
-   - RDS database instances
-   - No direct internet access (uses NAT Gateway for outbound)
+| Subnet Type | AZ | CIDR | Purpose |
+|-------------|-----|------|---------|
+| Public | us-west-2a | `10.0.0.0/24` | ALB, NAT Gateway |
+| Public | us-west-2b | `10.0.1.0/24` | ALB, NAT Gateway |
+| Private | us-west-2a | `10.0.10.0/24` | ECS Tasks, RDS |
+| Private | us-west-2b | `10.0.11.0/24` | ECS Tasks, RDS |
 
-### Security Groups
+### 2.3. Route Tables
 
-| Resource | Inbound Rules | Outbound Rules |
-|----------|---------------|----------------|
-| ALB | HTTP (80), HTTPS (443) from 0.0.0.0/0 | All to ECS tasks |
-| ECS Tasks | Port 8000 from ALB | All to internet, RDS |
-| RDS | PostgreSQL (5432) from ECS tasks | All to internet |
+**Public Route Table:**
+| Destination | Target |
+|-------------|--------|
+| `10.0.0.0/16` | Local |
+| `0.0.0.0/0` | Internet Gateway |
 
-## 🔧 Component Details
+**Private Route Table:**
+| Destination | Target |
+|-------------|--------|
+| `10.0.0.0/16` | Local |
+| `0.0.0.0/0` | NAT Gateway |
 
-### Frontend (S3 + CloudFront)
+---
 
-**Purpose**: Serve React single-page application globally with low latency
+## 3. Security Groups
 
-**Components**:
-- S3 bucket for static files
-- CloudFront distribution for CDN
-- Origin Access Identity (OAI) for secure S3 access
+### 3.1. ALB Security Group
 
-**Features**:
-- HTTPS only (redirect from HTTP)
-- Gzip/Brotli compression
-- Edge caching (TTL: 1 hour for assets, no-cache for index.html)
-- Custom error pages for SPA routing
-- Global edge locations
+| Direction | Port | Protocol | Source | Description |
+|-----------|------|----------|--------|-------------|
+| Inbound | 443 | TCP | `0.0.0.0/0` | HTTPS traffic |
+| Inbound | 80 | TCP | `0.0.0.0/0` | HTTP (redirects to HTTPS) |
+| Outbound | All | All | ECS SG | To backend containers |
 
-**URLs**:
-- S3: `s3://hr-cloud-infra-dev-frontend-{random}/`
-- CloudFront: `https://{distribution-id}.cloudfront.net`
+### 3.2. ECS Security Group
 
-### Backend (ECS Fargate)
+| Direction | Port | Protocol | Source | Description |
+|-----------|------|----------|--------|-------------|
+| Inbound | 8000 | TCP | ALB SG | From load balancer only |
+| Outbound | 443 | TCP | `0.0.0.0/0` | AWS APIs, external services |
+| Outbound | 5432 | TCP | RDS SG | Database access |
 
-**Purpose**: Run containerized Python FastAPI application
+### 3.3. RDS Security Group
 
-**Architecture**:
-- **Cluster**: hr-cloud-infra-dev-cluster
-- **Service**: hr-cloud-infra-dev-backend-service
-- **Launch Type**: Fargate (serverless)
-- **Task Definition**:
-  - CPU: 256 (0.25 vCPU)
-  - Memory: 512 MB
-  - Container Port: 8000
-  - Platform: linux/amd64
+| Direction | Port | Protocol | Source | Description |
+|-----------|------|----------|--------|-------------|
+| Inbound | 5432 | TCP | ECS SG | PostgreSQL from app only |
+| Outbound | None | - | - | No outbound required |
 
-**Scaling**:
-- Desired Count: 2 tasks
-- Auto-scaling based on:
-  - CPU utilization > 70%
-  - Memory utilization > 80%
-- Min: 2 tasks, Max: 10 tasks
+---
 
-**Container Image**:
-- Stored in Amazon ECR
-- Multi-stage Docker build
-- Non-root user for security
-- Health check endpoint: `/health`
+## 4. Compute: ECS Fargate
 
-**Environment Variables**:
-- `ENVIRONMENT`: dev/staging/prod
-- `DB_HOST`, `DB_PORT`, `DB_NAME`: Database connection
-- `DB_USERNAME`, `DB_PASSWORD`: From Secrets Manager
+### 4.1. Cluster Configuration
 
-### Database (RDS PostgreSQL)
+| Property | Value |
+|----------|-------|
+| **Cluster Name** | `blackflag-hr-cluster` |
+| **Launch Type** | Fargate (Serverless) |
+| **Container Insights** | Enabled |
 
-**Purpose**: Persistent data storage for HR platform
+### 4.2. Service Configuration
 
-**Configuration**:
-- Engine: PostgreSQL 15.4
-- Instance Class: db.t3.micro (can be upgraded)
-- Storage: 20 GB GP3 (auto-scaling to 40 GB)
-- Multi-AZ: Disabled (configurable for production)
+| Property | Value |
+|----------|-------|
+| **Service Name** | `blackflag-hr-backend` |
+| **Desired Count** | 2 (minimum for HA) |
+| **Deployment Type** | Rolling Update |
+| **Health Check Grace** | 60 seconds |
 
-**Backup**:
-- Automated backups: 7-day retention
-- Backup window: 03:00-04:00 UTC
-- Maintenance window: Monday 04:00-05:00 UTC
+### 4.3. Task Definition
 
-**Security**:
-- Encrypted at rest
-- Private subnet placement
-- Security group restricts access to ECS tasks only
-- Credentials in Secrets Manager
+| Property | Value |
+|----------|-------|
+| **CPU** | 256 (0.25 vCPU) |
+| **Memory** | 512 MB |
+| **Platform** | Linux/ARM64 or Linux/AMD64 |
+| **Network Mode** | awsvpc |
 
-**Monitoring**:
-- Performance Insights enabled
-- CloudWatch logs for PostgreSQL and upgrades
+**Container Configuration:**
+```json
+{
+  "name": "backend",
+  "image": "${ECR_REPO}:latest",
+  "portMappings": [{ "containerPort": 8000 }],
+  "logConfiguration": {
+    "logDriver": "awslogs",
+    "options": {
+      "awslogs-group": "/ecs/blackflag-hr",
+      "awslogs-region": "us-west-2",
+      "awslogs-stream-prefix": "backend"
+    }
+  },
+  "secrets": [
+    { "name": "DB_PASSWORD", "valueFrom": "arn:aws:secretsmanager:..." }
+  ]
+}
+```
 
-### Load Balancer (ALB)
+### 4.4. Auto-Scaling Policy
 
-**Purpose**: Distribute traffic to ECS tasks with health checks
+| Metric | Target | Scale Out | Scale In |
+|--------|--------|-----------|----------|
+| CPU Utilization | 70% | +1 task | -1 task |
+| Memory Utilization | 80% | +1 task | -1 task |
 
-**Configuration**:
-- Type: Application Load Balancer
-- Scheme: Internet-facing
-- Subnets: Public subnets in both AZs
-- Listeners:
-  - HTTP (80): Forward to ECS target group
-  - HTTPS (443): Can be configured with ACM certificate
+**Limits:** Min 2 tasks, Max 10 tasks
 
-**Target Group**:
-- Protocol: HTTP
-- Port: 8000
-- Health Check:
-  - Path: `/health`
-  - Interval: 30 seconds
-  - Timeout: 5 seconds
-  - Healthy threshold: 2
-  - Unhealthy threshold: 3
+---
 
-**Features**:
-- Connection draining: 30 seconds
-- Cross-zone load balancing
-- Access logs (can be enabled)
+## 5. Database: RDS PostgreSQL
 
-### Secrets Management
+### 5.1. Instance Configuration
 
-**AWS Secrets Manager** stores sensitive data:
+| Property | Value |
+|----------|-------|
+| **Engine** | PostgreSQL 15.x |
+| **Instance Class** | `db.t3.micro` (dev) / `db.t3.small` (prod) |
+| **Storage** | 20 GB GP3, auto-scaling to 100 GB |
+| **Multi-AZ** | Disabled (dev) / Enabled (prod) |
 
-1. **Database Credentials** (`hr-cloud-infra-dev-db-credentials`):
-   - username
-   - password
-   - host
-   - port
-   - dbname
-   - engine
+### 5.2. Security Configuration
 
-2. **Application Secrets** (`hr-cloud-infra-dev-app-secrets`):
-   - jwt_secret
-   - api_key
+| Property | Value |
+|----------|-------|
+| **Public Access** | Disabled |
+| **Encryption at Rest** | AWS KMS |
+| **SSL/TLS** | Required (`rds.force_ssl=1`) |
+| **IAM Auth** | Optional |
 
-**Access**:
-- ECS task execution role has permission to read secrets
-- Secrets are injected as environment variables at container runtime
+### 5.3. Backup & Maintenance
 
-## 📊 Monitoring Architecture
+| Property | Value |
+|----------|-------|
+| **Automated Backups** | 7-day retention |
+| **Backup Window** | 03:00-04:00 UTC |
+| **Maintenance Window** | Mon 04:00-05:00 UTC |
+| **Deletion Protection** | Enabled (prod) |
 
-### CloudWatch Dashboard
+---
 
-Centralized dashboard showing:
-- ECS CPU and Memory utilization
-- RDS performance metrics
-- ALB request count and response times
-- CloudFront traffic and error rates
+## 6. Content Delivery: CloudFront + S3
 
-### CloudWatch Alarms
+### 6.1. S3 Bucket (Frontend)
+
+| Property | Value |
+|----------|-------|
+| **Bucket Name** | `blackflag-hr-frontend-{env}` |
+| **Versioning** | Enabled |
+| **Public Access** | Blocked |
+| **Encryption** | AES-256 (SSE-S3) |
+
+### 6.2. CloudFront Distribution
+
+| Property | Value |
+|----------|-------|
+| **Origin** | S3 Bucket (OAC) |
+| **Price Class** | PriceClass_100 (NA/EU) |
+| **HTTP Version** | HTTP/2 and HTTP/3 |
+| **SSL Certificate** | ACM (custom domain) |
+
+**Cache Behavior:**
+| Path Pattern | TTL | Compression |
+|--------------|-----|-------------|
+| `index.html` | 0 (no-cache) | Gzip, Brotli |
+| `*.js`, `*.css` | 31536000 (1 year) | Gzip, Brotli |
+| `assets/*` | 86400 (1 day) | Gzip, Brotli |
+
+**Error Pages:**
+| Error Code | Response | TTL |
+|------------|----------|-----|
+| 403, 404 | `/index.html` (200) | 10s |
+
+---
+
+## 7. Load Balancer: ALB
+
+### 7.1. Listener Configuration
+
+| Port | Protocol | Action |
+|------|----------|--------|
+| 80 | HTTP | Redirect → HTTPS (301) |
+| 443 | HTTPS | Forward → Target Group |
+
+**HTTPS Listener:**
+- **SSL Policy:** `ELBSecurityPolicy-TLS13-1-2-2021-06`
+- **Certificate:** ACM-managed for custom domain
+
+### 7.2. Target Group
+
+| Property | Value |
+|----------|-------|
+| **Target Type** | IP (Fargate) |
+| **Protocol** | HTTP |
+| **Port** | 8000 |
+| **Deregistration Delay** | 30 seconds |
+
+**Health Check:**
+| Property | Value |
+|----------|-------|
+| **Path** | `/health` |
+| **Interval** | 30 seconds |
+| **Timeout** | 5 seconds |
+| **Healthy Threshold** | 2 |
+| **Unhealthy Threshold** | 3 |
+
+---
+
+## 8. Security Services
+
+### 8.1. AWS WAF
+
+**Attached to:** Application Load Balancer
+
+| Rule Group | Mode | Description |
+|------------|------|-------------|
+| AWSManagedRulesCommonRuleSet | Block | XSS, LFI, path traversal |
+| AWSManagedRulesSQLiRuleSet | Block | SQL injection |
+| AWSManagedRulesKnownBadInputsRuleSet | Block | Log4j, etc. |
+
+### 8.2. AWS Secrets Manager
+
+| Secret | Contents |
+|--------|----------|
+| `blackflag-hr/db-credentials` | `username`, `password`, `host`, `port` |
+| `blackflag-hr/app-secrets` | `jwt_secret`, API keys |
+
+**Rotation:** Automatic (30-day cycle via Lambda)
+
+### 8.3. ACM (Certificate Manager)
+
+| Domain | Status | Renewal |
+|--------|--------|---------|
+| `portal.blackflag.hr` | Issued | Automatic |
+| `api.blackflag.hr` | Issued | Automatic |
+
+---
+
+## 9. Monitoring & Observability
+
+### 9.1. CloudWatch Log Groups
+
+| Log Group | Retention | Source |
+|-----------|-----------|--------|
+| `/ecs/blackflag-hr` | 14 days | ECS Tasks |
+| `/rds/blackflag-hr` | 7 days | RDS PostgreSQL |
+| `/waf/blackflag-hr` | 30 days | WAF Requests |
+
+### 9.2. CloudWatch Alarms
 
 | Alarm | Metric | Threshold | Action |
 |-------|--------|-----------|--------|
-| ECS High CPU | CPUUtilization | > 80% | SNS notification |
-| ECS High Memory | MemoryUtilization | > 80% | SNS notification |
-| RDS High CPU | CPUUtilization | > 80% | SNS notification |
-| RDS Low Storage | FreeStorageSpace | < 5 GB | SNS notification |
-| ALB High Response Time | TargetResponseTime | > 1 second | SNS notification |
-| ALB Unhealthy Targets | UnHealthyHostCount | > 0 | SNS notification |
-| Backend Errors | BackendErrors | > 10 in 5 min | SNS notification |
+| ECS High CPU | `CPUUtilization` | > 80% for 5m | SNS → Slack |
+| ECS High Memory | `MemoryUtilization` | > 85% for 5m | SNS → Slack |
+| RDS High CPU | `CPUUtilization` | > 80% for 5m | SNS → Slack |
+| RDS Low Storage | `FreeStorageSpace` | < 5 GB | SNS → Slack |
+| ALB 5xx Errors | `HTTPCode_Target_5XX_Count` | > 10 in 5m | SNS → Slack |
+| ALB Latency | `TargetResponseTime` | > 1s avg | SNS → Slack |
+| Unhealthy Hosts | `UnHealthyHostCount` | > 0 | SNS → Slack |
 
-### Logging
+### 9.3. CloudWatch Dashboard
 
-**ECS Logs**:
-- Log Group: `/ecs/hr-cloud-infra-dev-backend`
-- Retention: 7 days
-- Format: JSON structured logs
+**Widgets:**
+- ECS CPU/Memory utilization (line chart)
+- ALB request count & latency (stacked area)
+- RDS connections & IOPS (line chart)
+- Error rate (5xx) (number + sparkline)
 
-**RDS Logs**:
-- PostgreSQL logs
-- Upgrade logs
-- Exported to CloudWatch
+---
 
-**Log Metric Filters**:
-- Backend errors: Track ERROR level logs
-- Trigger alarms when error count exceeds threshold
+## 10. Cost Optimization
 
-### SNS Notifications
+### 10.1. Monthly Cost Estimate (us-west-2)
 
-- Topic: `hr-cloud-infra-dev-alerts`
-- Email subscription for alert notifications
-- Receives alarms from all CloudWatch alarms
-
-## 🔒 Security Architecture
-
-### Network Security
-
-1. **VPC Isolation**:
-   - Private subnets for backend and database
-   - No direct internet access
-   - NAT Gateway for outbound traffic
-
-2. **Security Groups**:
-   - Principle of least privilege
-   - Only required ports open
-   - Source-restricted rules
-
-3. **Network ACLs**:
-   - Default VPC NACLs (allow all by default)
-   - Can be customized for additional security
-
-### Data Security
-
-1. **Encryption at Rest**:
-   - RDS encrypted with AWS KMS
-   - S3 server-side encryption (AES256)
-   - EBS volumes encrypted
-
-2. **Encryption in Transit**:
-   - HTTPS for CloudFront
-   - TLS for database connections
-   - HTTPS for ALB (when configured)
-
-3. **Secrets Management**:
-   - No hardcoded credentials
-   - Secrets Manager for sensitive data
-   - IAM roles for access control
-
-### Access Control
-
-1. **IAM Roles**:
-   - ECS Task Execution Role: Pull images, read secrets
-   - ECS Task Role: Application permissions
-   - Principle of least privilege
-
-2. **S3 Bucket Policy**:
-   - Only CloudFront OAI can access
-   - Public access blocked
-
-3. **Database Access**:
-   - Only from ECS security group
-   - No public accessibility
-
-## 🚀 Scalability
-
-### Horizontal Scaling
-
-1. **ECS Auto-scaling**:
-   - Scales based on CPU/Memory
-   - Adds/removes tasks automatically
-   - Range: 2-10 tasks
-
-2. **ALB**:
-   - Automatically scales to handle traffic
-   - No manual intervention required
-
-3. **RDS Read Replicas** (can be added):
-   - Offload read queries
-   - Improve performance
-
-### Vertical Scaling
-
-1. **ECS Task Size**:
-   - Increase CPU/Memory in task definition
-   - Zero-downtime deployment
-
-2. **RDS Instance Class**:
-   - Upgrade to larger instance
-   - Minimal downtime (Multi-AZ: ~1-2 minutes)
-
-3. **RDS Storage**:
-   - Auto-scaling enabled
-   - Grows as needed
-
-## 🔄 High Availability
-
-### Multi-AZ Deployment
-
-- ALB spans 2 availability zones
-- ECS tasks distributed across AZs
-- RDS Multi-AZ available (production setting)
-
-### Fault Tolerance
-
-1. **ECS**:
-   - Multiple tasks running
-   - Task failure triggers replacement
-   - Health checks detect unhealthy tasks
-
-2. **RDS**:
-   - Automated backups (7 days)
-   - Point-in-time recovery
-   - Multi-AZ for automatic failover (optional)
-
-3. **CloudFront**:
-   - Global edge network
-   - Automatic failover
-   - Origin shield (can be enabled)
-
-## 💰 Cost Optimization
-
-### Current Cost Estimates (us-west-2)
-
-| Service | Configuration | Estimated Monthly Cost |
-|---------|---------------|------------------------|
-| ECS Fargate | 2 tasks (0.25 vCPU, 512MB) | ~$15 |
-| RDS PostgreSQL | db.t3.micro | ~$15 |
+| Service | Configuration | Est. Cost |
+|---------|---------------|-----------|
+| ECS Fargate | 2 tasks × 0.25 vCPU, 512MB | ~$15 |
+| RDS PostgreSQL | db.t3.micro, 20GB | ~$15 |
 | NAT Gateway | 2 gateways | ~$65 |
 | ALB | Standard | ~$20 |
 | S3 + CloudFront | Low traffic | ~$5 |
-| Data Transfer | Moderate | ~$10 |
-| **Total** | | **~$130/month** |
+| Secrets Manager | 2 secrets | ~$1 |
+| CloudWatch | Logs + Alarms | ~$5 |
+| **Total** | | **~$126/month** |
 
-### Cost Optimization Tips
+### 10.2. Cost Reduction Options
 
-1. **Development Environment**:
-   - Use single NAT Gateway instead of 2
-   - Stop non-production resources when not in use
-   - Use db.t3.micro for RDS
+| Strategy | Savings | Trade-off |
+|----------|---------|-----------|
+| Single NAT Gateway | ~$32/mo | Reduced AZ redundancy |
+| Spot Fargate | ~30-50% | Possible interruptions |
+| Reserved RDS | ~30% | 1-year commitment |
+| Scheduled scaling | Variable | Manual management |
 
-2. **Production Optimizations**:
-   - Reserved instances for RDS
-   - S3 Intelligent-Tiering
-   - CloudFront cost class selection
-   - VPC endpoints for S3 (already included)
+---
 
-3. **Monitoring**:
-   - Set up AWS Budgets
-   - Cost anomaly detection
-   - Regular cost reviews
+## 11. Disaster Recovery
 
-## 📈 Future Enhancements
+### 11.1. RPO/RTO Targets
 
-### Phase 2: HR Platform Features
+| Metric | Development | Production |
+|--------|-------------|------------|
+| **RPO** (Data Loss) | 24 hours | 1 hour |
+| **RTO** (Downtime) | 4 hours | 15 minutes |
 
-- Employee management CRUD
-- User authentication (Cognito)
-- Role-based access control
-- Document storage (S3)
-- Email notifications (SES)
+### 11.2. Backup Strategy
 
-### Phase 3: Advanced Features
+| Component | Backup Method | Retention |
+|-----------|---------------|-----------|
+| RDS | Automated snapshots | 7 days |
+| S3 Frontend | Versioning | 30 days |
+| Terraform State | S3 + DynamoDB lock | Indefinite |
+| Secrets | Cross-region replication | N/A |
 
-- ElastiCache for Redis (caching)
-- SQS for async processing
-- Lambda functions for serverless tasks
-- Step Functions for workflows
-- Elasticsearch for search
+### 11.3. Recovery Procedures
 
-### Phase 4: Enterprise Features
+1. **ECS Failure:** Automatic task replacement (Fargate)
+2. **RDS Failure:** Point-in-time restore or failover (Multi-AZ)
+3. **Region Failure:** Terraform apply to secondary region (DR plan)
 
-- Multi-region deployment
-- Disaster recovery plan
-- Advanced WAF rules
-- DDoS protection (Shield)
-- Compliance (HIPAA, SOC 2)
+---
 
-## 📚 References
+## References
 
+- [AWS VPC Documentation](https://docs.aws.amazon.com/vpc/)
+- [ECS Best Practices Guide](https://docs.aws.amazon.com/AmazonECS/latest/bestpracticesguide/)
+- [RDS PostgreSQL User Guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_PostgreSQL.html)
+- [CloudFront Developer Guide](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/)
 - [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
-- [ECS Best Practices](https://docs.aws.amazon.com/AmazonECS/latest/bestpracticesguide/)
-- [RDS Best Practices](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_BestPractices.html)
-- [CloudFront Best Practices](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/best-practices.html)
-
-
-

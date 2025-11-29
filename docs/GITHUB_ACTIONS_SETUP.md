@@ -2,13 +2,13 @@
 
 This guide explains how to configure GitHub Actions secrets for automated CI/CD deployments.
 
-## 📋 Prerequisites
+## Prerequisites
 
 - GitHub repository with admin access
 - AWS Account with deployed infrastructure (via Terraform)
 - AWS IAM user with programmatic access
 
-## 🔑 Required GitHub Secrets
+## Required GitHub Secrets
 
 Navigate to your GitHub repository → Settings → Secrets and variables → Actions
 
@@ -73,7 +73,7 @@ These are automatically created by Terraform, but verify the names:
      ```
    - Example: `http://hr-cloud-infra-dev-alb-123456789.us-west-2.elb.amazonaws.com`
 
-## 🔧 Setting Up IAM User for GitHub Actions
+## Setting Up IAM User for GitHub Actions
 
 ### Step 1: Create IAM User
 
@@ -160,7 +160,7 @@ aws iam put-user-policy \
   --policy-document file://github-actions-policy.json
 ```
 
-## 📝 Adding Secrets to GitHub
+## Adding Secrets to GitHub
 
 ### Via GitHub Web UI
 
@@ -189,7 +189,7 @@ gh secret set CLOUDFRONT_DOMAIN
 gh secret set VITE_API_URL_PROD
 ```
 
-## ✅ Verification
+## Verification
 
 ### Test Backend Workflow
 
@@ -236,7 +236,7 @@ gh secret set VITE_API_URL_PROD
    - Watch the **Terraform CI/CD** workflow
    - Verify it completes successfully
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Authentication Failed
 
@@ -283,7 +283,7 @@ gh secret set VITE_API_URL_PROD
 - Verify distribution ID is correct
 - Wait for previous invalidation to complete
 
-## 🔒 Security Best Practices
+## Security Best Practices
 
 1. **Principle of Least Privilege**
    - Only grant necessary permissions
@@ -305,14 +305,14 @@ gh secret set VITE_API_URL_PROD
    - Use `.gitignore` for local secrets
    - Never commit secrets to repository
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
 - [AWS IAM Best Practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html)
 - [Encrypted Secrets](https://docs.github.com/en/actions/security-guides/encrypted-secrets)
 - [OIDC with AWS](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
 
-## ✨ Advanced: Using OIDC (Recommended for Production)
+## Advanced: Using OIDC (Recommended for Production)
 
 Instead of long-lived access keys, use OpenID Connect (OIDC) for more secure authentication:
 

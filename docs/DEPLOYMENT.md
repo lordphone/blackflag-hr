@@ -2,7 +2,7 @@
 
 This guide provides step-by-step instructions for deploying the AWS cloud infrastructure and applications.
 
-## 📋 Prerequisites
+## Prerequisites
 
 Before starting, ensure you have:
 
@@ -26,7 +26,7 @@ Your AWS user/role needs the following permissions:
 - Secrets Manager
 - CloudWatch and SNS
 
-## 🚀 Deployment Steps
+## Deployment Steps
 
 ### Step 1: Clone the Repository
 
@@ -88,7 +88,7 @@ cd final-project
    terraform output > ../terraform-outputs.txt
    ```
 
-**⏱️ Deployment time: ~10-15 minutes**
+**Deployment time: ~10-15 minutes**
 
 The infrastructure includes:
 - VPC with public/private subnets
@@ -146,7 +146,7 @@ The infrastructure includes:
      --region us-west-2
    ```
 
-**⏱️ Deployment time: ~5 minutes**
+**Deployment time: ~5 minutes**
 
 ### Step 5: Deploy Frontend
 
@@ -189,7 +189,7 @@ The infrastructure includes:
      --paths "/*"
    ```
 
-**⏱️ Deployment time: ~2-3 minutes (CloudFront invalidation takes 5-10 minutes)**
+**Deployment time: ~2-3 minutes (CloudFront invalidation takes 5-10 minutes)**
 
 ### Step 6: Verify Deployment
 
@@ -220,7 +220,7 @@ The infrastructure includes:
    - You should see the HR Cloud Platform homepage
    - The system status should show "All Systems Operational"
 
-## 🔄 Updates and Redeployment
+## Updates and Redeployment
 
 ### Update Backend
 
@@ -262,7 +262,7 @@ terraform plan
 terraform apply
 ```
 
-## 🔒 Secrets Management
+## Secrets Management
 
 ### View Database Credentials
 
@@ -294,7 +294,7 @@ DB_NAME=$(echo $DB_CREDS | jq -r .dbname)
 psql -h $RDS_ENDPOINT -U $DB_USER -d $DB_NAME
 ```
 
-## 📊 Monitoring and Logs
+## Monitoring and Logs
 
 ### View CloudWatch Logs
 
@@ -317,9 +317,9 @@ aws cloudwatch describe-alarms \
   --region us-west-2
 ```
 
-## 🧹 Cleanup (Destroy Resources)
+## Cleanup (Destroy Resources)
 
-**⚠️ Warning: This will delete all resources and data!**
+**Warning: This will delete all resources and data!**
 
 ```bash
 cd terraform
@@ -333,7 +333,7 @@ Note: Some resources may need manual deletion:
 - ECR repositories with images
 - CloudWatch log groups (if retention is set)
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### ECS Tasks Not Starting
 
@@ -395,7 +395,7 @@ Note: Some resources may need manual deletion:
    terraform state list
    ```
 
-## 📝 Next Steps
+## Next Steps
 
 After successful deployment:
 
@@ -423,7 +423,7 @@ After successful deployment:
    - Set up PagerDuty or similar
    - Create custom CloudWatch dashboards
 
-## 📚 Additional Resources
+## Additional Resources
 
 - [Terraform AWS Provider Docs](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
 - [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
