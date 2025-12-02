@@ -64,10 +64,10 @@ Unlike traditional architectures that rely on heavy, self-hosted infrastructure 
 Our pipeline implements a "Secure Supply Chain" workflow:
 
 ```
-┌─────────┐    ┌───────────┐    ┌──────────────┐    ┌─────────┐    ┌──────────────┐    ┌─────────┐
-│ Commit  │───▶│ Lint/Test │───▶│ Security     │───▶│  Build  │───▶│ Container    │───▶│ Deploy  │
-│         │    │           │    │ Scan (SAST)  │    │         │    │ Scan (ECR)   │    │ (ECS)   │
-└─────────┘    └───────────┘    └──────────────┘    └─────────┘    └──────────────┘    └─────────┘
+┌─────────┐   ┌───────────┐   ┌──────────────┐   ┌─────────┐   ┌──────────────┐   ┌─────────┐
+│ Commit  │──▶│ Lint/Test │──▶│   Security   │──▶│  Build  │──▶│  Container   │──▶│ Deploy  │
+│         │   │           │   │ Scan (SAST)  │   │         │   │  Scan (ECR)  │   │  (ECS)  │
+└─────────┘   └───────────┘   └──────────────┘   └─────────┘   └──────────────┘   └─────────┘
 ```
 
 1. **Commit:** Developer pushes code to `main`.
@@ -156,7 +156,7 @@ Our pipeline implements a "Secure Supply Chain" workflow:
 
 ```
 ┌─────────────────────────────────────────┐
-│              Employee                    │
+│               Employee                  │
 ├─────────────────────────────────────────┤
 │ id              : UUID (PK)             │
 │ employee_id     : VARCHAR(50) UNIQUE    │

@@ -33,7 +33,8 @@ Running this stack 24/7 in `us-west-2` costs approximately **$130/month**.
 
 | Document | Description |
 |----------|-------------|
-| **[Design & Architecture](docs/DESIGN.md)** | Application design, security decisions, RBAC model, and feature roadmap |
+| **[Product Features](docs/FEATURES.md)** | Functional requirements, HR features by phase, UI specs |
+| **[Design & Architecture](docs/DESIGN.md)** | Application design, security decisions, RBAC model |
 | **[AWS Infrastructure](docs/ARCHITECTURE.md)** | VPC topology, ECS/RDS configuration, security groups, and cost analysis |
 | **[Deployment Guide](docs/DEPLOYMENT.md)** | Comprehensive deployment instructions and CI/CD setup |
 
