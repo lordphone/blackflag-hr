@@ -17,7 +17,8 @@ interface Employee {
 const Dashboard = () => {
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [error, _setError] = useState('')
   const navigate = useNavigate()
 
   useEffect(() => {
