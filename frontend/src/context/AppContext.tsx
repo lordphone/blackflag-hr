@@ -8,12 +8,14 @@ import {
   EmployeeFormData,
   LeaveStatus,
   DocumentType,
+  Message,
 } from '../types'
 import {
   initialEmployees,
   initialLeaveBalances,
   initialLeaveRequests,
   initialDocuments,
+  initialMessages,
   currentUser,
   generateId,
   generateEmployeeId,
@@ -45,6 +47,13 @@ interface AppContextType {
   addDocument: (data: { employee_id: string; document_type: DocumentType; filename: string; file_size: number; expiry_date?: string }) => Document
   deleteDocument: (id: string) => void
 
+  // Messages
+  messages: Message[]
+  sendMessage: (toId: string, content: string) => Message
+  markAsRead: (messageIds: string[]) => void
+  getConversation: (participantId: string) => Message[]
+  getUnreadCount: () => number
+
   // UI State
   notifications: Notification[]
   addNotification: (message: string, type: 'success' | 'error' | 'info') => void
@@ -66,6 +75,7 @@ interface StoredData {
   leaveBalances: LeaveBalance[]
   leaveRequests: LeaveRequest[]
   documents: Document[]
+  messages: Message[]
   isAuthenticated: boolean
 }
 
@@ -75,7 +85,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) {
-        return JSON.parse(stored)
+        const parsed = JSON.parse(stored)
+        // Handle migration: add missing fields
+        return {
+          employees: parsed.employees || initialEmployees,
+          leaveBalances: parsed.leaveBalances || initialLeaveBalances,
+          leaveRequests: parsed.leaveRequests || initialLeaveRequests,
+          documents: parsed.documents || initialDocuments,
+          messages: parsed.messages || initialMessages,
+          isAuthenticated: parsed.isAuthenticated || false,
+        }
       }
     } catch (e) {
       console.error('Failed to load stored data:', e)
@@ -85,6 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       leaveBalances: initialLeaveBalances,
       leaveRequests: initialLeaveRequests,
       documents: initialDocuments,
+      messages: initialMessages,
       isAuthenticated: false,
     }
   }
@@ -95,6 +115,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [leaveBalances, setLeaveBalances] = useState<LeaveBalance[]>(initialState.leaveBalances)
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>(initialState.leaveRequests)
   const [documents, setDocuments] = useState<Document[]>(initialState.documents)
+  const [messages, setMessages] = useState<Message[]>(initialState.messages)
   const [isAuthenticated, setIsAuthenticated] = useState(initialState.isAuthenticated)
   const [notifications, setNotifications] = useState<Notification[]>([])
 
@@ -105,10 +126,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       leaveBalances,
       leaveRequests,
       documents,
+      messages,
       isAuthenticated,
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-  }, [employees, leaveBalances, leaveRequests, documents, isAuthenticated])
+  }, [employees, leaveBalances, leaveRequests, documents, messages, isAuthenticated])
 
   // Auth functions
   const login = (email: string, password: string): boolean => {
@@ -231,6 +253,39 @@ export function AppProvider({ children }: { children: ReactNode }) {
     addNotification('Document deleted.', 'info')
   }
 
+  // Message functions
+  const sendMessage = (toId: string, content: string): Message => {
+    const newMessage: Message = {
+      id: generateId('msg'),
+      from_id: 'emp-001', // Current user
+      to_id: toId,
+      content,
+      read: false,
+      created_at: new Date().toISOString(),
+    }
+    setMessages(prev => [...prev, newMessage])
+    return newMessage
+  }
+
+  const markAsRead = (messageIds: string[]) => {
+    setMessages(prev => prev.map(msg =>
+      messageIds.includes(msg.id) ? { ...msg, read: true } : msg
+    ))
+  }
+
+  const getConversation = (participantId: string): Message[] => {
+    return messages
+      .filter(msg =>
+        (msg.from_id === 'emp-001' && msg.to_id === participantId) ||
+        (msg.from_id === participantId && msg.to_id === 'emp-001')
+      )
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }
+
+  const getUnreadCount = (): number => {
+    return messages.filter(msg => msg.to_id === 'emp-001' && !msg.read).length
+  }
+
   // Notification functions
   const addNotification = (message: string, type: 'success' | 'error' | 'info') => {
     const id = generateId('notif')
@@ -265,6 +320,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
         documents,
         addDocument,
         deleteDocument,
+        messages,
+        sendMessage,
+        markAsRead,
+        getConversation,
+        getUnreadCount,
         notifications,
         addNotification,
         clearNotification,

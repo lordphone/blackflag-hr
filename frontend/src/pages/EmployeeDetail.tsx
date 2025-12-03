@@ -54,18 +54,28 @@ export default function EmployeeDetail() {
             <p className="text-stone-500">{employee.position}</p>
             <p className="text-sm text-stone-400">{employee.department} · {employee.employee_id}</p>
           </div>
-          {isHRAdmin && (
-            <div className="flex gap-2">
-              <button onClick={() => setShowModal(true)} className="px-3 py-1.5 text-sm text-stone-600 hover:text-stone-900 border border-stone-200 rounded-lg">
-                Edit
+          <div className="flex gap-2">
+            {employee.id !== 'emp-001' && (
+              <button 
+                onClick={() => navigate(`/messages?to=${employee.id}`)} 
+                className="px-3 py-1.5 text-sm text-stone-600 hover:text-stone-900 border border-stone-200 rounded-lg"
+              >
+                Message
               </button>
-              {employee.is_active && (
-                <button onClick={handleDeactivate} className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded-lg">
-                  Deactivate
+            )}
+            {isHRAdmin && (
+              <>
+                <button onClick={() => setShowModal(true)} className="px-3 py-1.5 text-sm text-stone-600 hover:text-stone-900 border border-stone-200 rounded-lg">
+                  Edit
                 </button>
-              )}
-            </div>
-          )}
+                {employee.is_active && (
+                  <button onClick={handleDeactivate} className="px-3 py-1.5 text-sm text-red-600 hover:text-red-700 border border-red-200 rounded-lg">
+                    Deactivate
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 

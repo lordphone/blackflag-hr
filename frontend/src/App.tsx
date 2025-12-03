@@ -8,6 +8,7 @@ import EmployeeDetail from './pages/EmployeeDetail'
 import Profile from './pages/Profile'
 import Leave from './pages/Leave'
 import Documents from './pages/Documents'
+import Messages from './pages/Messages'
 import Admin from './pages/Admin'
 import NotFound from './pages/NotFound'
 
@@ -77,6 +78,12 @@ function AppRoutes() {
       <Route path="/documents" element={
         <ProtectedRoute>
           <Documents />
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/messages" element={
+        <ProtectedRoute>
+          <Messages />
         </ProtectedRoute>
       } />
       

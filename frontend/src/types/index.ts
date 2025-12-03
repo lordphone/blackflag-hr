@@ -129,3 +129,19 @@ export const DOCUMENT_TYPE_LABELS: Record<DocumentType, string> = {
   other: 'Other',
 }
 
+// Message types
+export interface Message {
+  id: string
+  from_id: string
+  to_id: string
+  content: string
+  read: boolean
+  created_at: string
+}
+
+export interface Conversation {
+  participant_id: string
+  last_message: Message
+  unread_count: number
+}
+

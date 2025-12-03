@@ -1,4 +1,4 @@
-import { Employee, LeaveBalance, LeaveRequest, Document, User } from '../types'
+import { Employee, LeaveBalance, LeaveRequest, Document, User, Message } from '../types'
 
 // Current logged-in user (HR Admin for demo)
 export const currentUser: User = {
@@ -382,6 +382,58 @@ export const initialDocuments: Document[] = [
     uploaded_by: 'emp-004',
     expiry_date: '2025-09-01',
     created_at: '2023-09-01T09:00:00Z',
+  },
+]
+
+// Mock messages
+export const initialMessages: Message[] = [
+  {
+    id: 'msg-001',
+    from_id: 'emp-002',
+    to_id: 'emp-001',
+    content: 'Hi Sarah, I wanted to check on the status of my leave request for the holidays.',
+    read: true,
+    created_at: '2024-12-02T10:30:00Z',
+  },
+  {
+    id: 'msg-002',
+    from_id: 'emp-001',
+    to_id: 'emp-002',
+    content: 'Hi Marcus! I\'ll review it today and get back to you by end of day.',
+    read: true,
+    created_at: '2024-12-02T11:15:00Z',
+  },
+  {
+    id: 'msg-003',
+    from_id: 'emp-002',
+    to_id: 'emp-001',
+    content: 'Thanks! Appreciate the quick response.',
+    read: false,
+    created_at: '2024-12-02T11:20:00Z',
+  },
+  {
+    id: 'msg-004',
+    from_id: 'emp-005',
+    to_id: 'emp-001',
+    content: 'Sarah, can we schedule a meeting to discuss the new hiring plan for Q1?',
+    read: false,
+    created_at: '2024-12-02T09:00:00Z',
+  },
+  {
+    id: 'msg-005',
+    from_id: 'emp-003',
+    to_id: 'emp-001',
+    content: 'Quick question about the benefits enrollment deadline - is it still Dec 15?',
+    read: true,
+    created_at: '2024-12-01T16:45:00Z',
+  },
+  {
+    id: 'msg-006',
+    from_id: 'emp-001',
+    to_id: 'emp-003',
+    content: 'Yes, December 15th is the deadline. Let me know if you need any help with the forms!',
+    read: true,
+    created_at: '2024-12-01T17:00:00Z',
   },
 ]
 

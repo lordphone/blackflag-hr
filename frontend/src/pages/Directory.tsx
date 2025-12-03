@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { DEPARTMENTS } from '../types'
 import EmployeeModal from '../components/EmployeeModal'
@@ -11,6 +11,9 @@ export default function Directory() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('active')
   const [showModal, setShowModal] = useState(false)
   const [editingEmployee, setEditingEmployee] = useState<string | null>(null)
+  const navigate = useNavigate()
+
+  const currentUserId = 'emp-001'
 
   const filteredEmployees = useMemo(() => {
     return employees.filter(emp => {
@@ -108,11 +111,21 @@ export default function Directory() {
               <a href={`mailto:${employee.email}`} className="text-sm text-stone-500 hover:text-stone-700 truncate">
                 {employee.email}
               </a>
-              {user.role === 'hr_admin' && (
-                <button onClick={() => handleEdit(employee.id)} className="text-sm text-stone-400 hover:text-stone-600">
-                  Edit
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {employee.id !== currentUserId && (
+                  <button 
+                    onClick={() => navigate(`/messages?to=${employee.id}`)}
+                    className="text-sm text-stone-400 hover:text-stone-600"
+                  >
+                    Message
+                  </button>
+                )}
+                {user.role === 'hr_admin' && (
+                  <button onClick={() => handleEdit(employee.id)} className="text-sm text-stone-400 hover:text-stone-600">
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
